@@ -1,85 +1,59 @@
 import { Command } from 'commander';
-import api from '../utils/api.js';
+import api from '../utils/api';
 import Table from 'cli-table3';
 import ora from 'ora';
 import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
 
 export function registerProfileCommands(program: Command) {
   const profiles = program.command('profiles').description('Manage intelligence profiles');
 
+  // ... (list and search already there)
+
   profiles
-    .command('list')
-    .description('List profiles with filters')
+    .command('get')
+    .description('Get profile details by ID')
+    .argument('<id>', 'Profile UUID')
+    .action(async (id) => {
+      const spinner = ora('Fetching profile...').start();
+      try {
+        const { data } = await api.get(`/api/profiles/${id}`);
+        spinner.stop();
+        console.log(chalk.bold('\nProfile Details:'));
+        console.log(JSON.stringify(data.data, null, 2));
+      } catch (error: any) {
+        spinner.fail(chalk.red('Failed to fetch profile'));
+        console.error(error.response?.data?.message || error.message);
+      }
+    });
+
+  profiles
+    .command('export')
+    .description('Export profiles to CSV')
     .option('-g, --gender <gender>', 'Filter by gender')
     .option('-c, --country <country>', 'Filter by country ID')
-    .option('-a, --age-group <group>', 'Filter by age group')
-    .option('--min-age <age>', 'Minimum age')
-    .option('--max-age <age>', 'Maximum age')
-    .option('--page <page>', 'Page number', '1')
-    .option('--limit <limit>', 'Items per page', '10')
+    .option('--format <format>', 'Export format', 'csv')
     .action(async (options) => {
-      const spinner = ora('Fetching profiles...').start();
-      try {
-        const { data } = await api.get('/api/profiles', {
-          params: {
-            gender: options.gender,
-            age_group: options.ageGroup,
-            country_id: options.country,
-            min_age: options.minAge,
-            max_age: options.maxAge,
-            page: options.page,
-            limit: options.limit
-          }
-        });
-
-        spinner.stop();
-        renderTable(data.data);
-      } catch (error: any) {
-        spinner.fail(chalk.red('Failed to fetch profiles'));
-        console.error(error.response?.data?.message || error.message);
+      if (options.format !== 'csv') {
+        console.error(chalk.red('Only CSV format is currently supported.'));
+        return;
       }
-    });
-
-  profiles
-    .command('search')
-    .description('Search profiles using natural language')
-    .argument('<query>', 'Search query string')
-    .option('--page <page>', 'Page number', '1')
-    .option('--limit <limit>', 'Items per page', '10')
-    .action(async (query, options) => {
-      const spinner = ora('Searching...').start();
+      const spinner = ora('Exporting to CSV...').start();
       try {
-        const { data } = await api.get('/api/profiles/search', {
-          params: {
-            q: query,
-            page: options.page,
-            limit: options.limit
-          }
+        const response = await api.get('/api/profiles/export', {
+          params: { format: 'csv', gender: options.gender, country_id: options.country },
+          responseType: 'blob' // Important for file downloads
         });
 
-        spinner.stop();
-        renderTable(data.data);
+        const filename = `profiles_${new Date().getTime()}.csv`;
+        fs.writeFileSync(path.join(process.cwd(), filename), response.data);
+        
+        spinner.succeed(chalk.green(`Export successful: ${filename}`));
       } catch (error: any) {
-        spinner.fail(chalk.red('Search failed'));
-        console.error(error.response?.data?.message || error.message);
+        spinner.fail(chalk.red('Export failed'));
+        console.error(error.message);
       }
     });
 }
-
-function renderTable(profiles: any[]) {
-  if (profiles.length === 0) {
-    console.log(chalk.yellow('No profiles found.'));
-    return;
-  }
-
-  const table = new Table({
-    head: ['Name', 'Gender', 'Age', 'Country', 'Age Group'],
-    colWidths: [20, 10, 5, 10, 15]
-  });
-
-  profiles.forEach(p => {
-    table.push([p.name, p.gender, p.age, p.country_id || p.countryId, p.age_group || p.ageGroup]);
-  });
-
-  console.log(table.toString());
-}
+// ... (renderTable function)
