@@ -17,12 +17,6 @@ COPY . .
 # Build the project (creates dist/index.js)
 RUN pnpm run build
 
-# Make the output file executable
-RUN chmod +x dist/index.js
-
-# Link the binary so 'insighta' works globally inside the container
-RUN pnpm link --global
-
 # Set the backend URL as an environment variable
 ENV BACKEND_URL=http://165.245.212.63
 
