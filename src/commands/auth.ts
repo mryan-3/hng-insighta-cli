@@ -16,13 +16,18 @@ export async function login() {
     const verifier = generateCodeVerifier();
     const challenge = generateCodeChallenge(verifier);
     const state = generateState();
-    const port = 3000;
+    
+    // Configurable port (default 3000)
+    const port = parseInt(process.env.CLI_REDIRECT_PORT || '3000');
     const redirectHost = process.env.CLI_REDIRECT_HOST || 'localhost';
-    const redirectUri = `http://${redirectHost}:${port}/callback`;
+    
+    // Only include port in URI if it's not the default HTTP/HTTPS ports
+    const portSuffix = (port === 80 || port === 443) ? '' : `:${port}`;
+    const redirectUri = `http://${redirectHost}${portSuffix}/callback`;
 
     // 1. Create temporary server to catch the callback
     const server = http.createServer(async (req, res) => {
-      const url = new URL(req.url!, `http://${redirectHost}:${port}`);
+      const url = new URL(req.url!, `http://${redirectHost}${portSuffix}`);
       
       if (url.pathname === '/callback') {
         const code = url.searchParams.get('code');
@@ -42,7 +47,11 @@ export async function login() {
           
           try {
             const response = await axios.get(`${BACKEND_URL}/auth/github/callback`, {
-              params: { code, code_verifier: verifier }
+              params: { 
+                code, 
+                code_verifier: verifier,
+                redirect_uri: redirectUri
+              }
             });
 
             if (response.data.status === 'success') {
