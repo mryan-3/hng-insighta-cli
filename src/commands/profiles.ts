@@ -39,6 +39,31 @@ export function registerProfileCommands(program: Command) {
         console.error(error.response?.data?.message || error.message);
       }
     });
+
+  profiles
+    .command('search')
+    .description('Search profiles using natural language')
+    .argument('<query>', 'Search query string')
+    .option('--page <page>', 'Page number', '1')
+    .option('--limit <limit>', 'Items per page', '10')
+    .action(async (query, options) => {
+      const spinner = ora('Searching...').start();
+      try {
+        const { data } = await api.get('/api/profiles/search', {
+          params: {
+            q: query,
+            page: options.page,
+            limit: options.limit
+          }
+        });
+
+        spinner.stop();
+        renderTable(data.data);
+      } catch (error: any) {
+        spinner.fail(chalk.red('Search failed'));
+        console.error(error.response?.data?.message || error.message);
+      }
+    });
 }
 
 function renderTable(profiles: any[]) {
