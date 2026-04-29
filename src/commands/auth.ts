@@ -16,12 +16,13 @@ export async function login() {
     const verifier = generateCodeVerifier();
     const challenge = generateCodeChallenge(verifier);
     const state = generateState();
-    const port = 3000; // Requirement implies a fixed or detectable port
-    const redirectUri = `http://localhost:${port}/callback`;
+    const port = 3000;
+    const redirectHost = process.env.CLI_REDIRECT_HOST || 'localhost';
+    const redirectUri = `http://${redirectHost}:${port}/callback`;
 
     // 1. Create temporary server to catch the callback
     const server = http.createServer(async (req, res) => {
-      const url = new URL(req.url!, `http://localhost:${port}`);
+      const url = new URL(req.url!, `http://${redirectHost}:${port}`);
       
       if (url.pathname === '/callback') {
         const code = url.searchParams.get('code');
