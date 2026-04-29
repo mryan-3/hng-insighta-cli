@@ -63,11 +63,18 @@ export async function login() {
 
     server.listen(port, () => {
       // 2. Construct GitHub URL and Open Browser
-      // We skip the backend redirect for CLI to ensure we catch the code locally
-      const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&state=${state}&scope=user:email`;
+      const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&state=${state}&scope=user:email&code_challenge=${challenge}&code_challenge_method=S256`;
       
-      spinner.text = 'Please log in via your browser...';
-      open(authUrl);
+      console.log(chalk.blue('\n---------------------------------------------------------'));
+      console.log(chalk.yellow(' Please open this URL in your browser to login:'));
+      console.log(chalk.cyan(authUrl));
+      console.log(chalk.blue('---------------------------------------------------------\n'));
+      
+      spinner.text = 'Waiting for browser callback...';
+      
+      open(authUrl).catch(() => {
+        // Silently ignore if browser can't open, user has the URL above
+      });
     });
 
   } catch (error: any) {
