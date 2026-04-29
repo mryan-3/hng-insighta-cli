@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { login, logout, whoami } from './commands/auth';
+import { login, logout, whoami } from './commands/auth.js';
+import { registerProfileCommands } from './commands/profiles.js';
 
 const program = new Command();
 
@@ -24,5 +25,8 @@ program
   .command('whoami')
   .description('Check current user status')
   .action(whoami);
+
+// Register Profile Commands
+registerProfileCommands(program);
 
 program.parse(process.argv);
