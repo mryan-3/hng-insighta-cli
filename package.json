@@ -2,6 +2,7 @@
   "name": "insighta-cli",
   "version": "1.0.0",
   "description": "Insighta Labs+ CLI Tool",
+  "type": "module",
   "main": "dist/index.js",
   "bin": {
     "insighta": "./dist/index.js"
