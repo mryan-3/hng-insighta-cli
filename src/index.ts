@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import chalk from 'chalk';
+import { login, logout, whoami } from './commands/auth';
 
 const program = new Command();
 
@@ -9,11 +9,20 @@ program
   .description('Insighta Labs+ CLI Tool')
   .version('1.0.0');
 
+// Authentication Commands
+program
+  .command('login')
+  .description('Authenticate with GitHub')
+  .action(login);
+
+program
+  .command('logout')
+  .description('Log out and clear local credentials')
+  .action(logout);
+
 program
   .command('whoami')
   .description('Check current user status')
-  .action(() => {
-    console.log(chalk.blue('You are not logged in. Run ') + chalk.green('insighta login') + chalk.blue(' to authenticate.'));
-  });
+  .action(whoami);
 
 program.parse(process.argv);
