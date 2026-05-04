@@ -7,7 +7,7 @@ import { generateCodeVerifier, generateCodeChallenge, generateState } from '../u
 import { tokenManager } from '../utils/storage';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'placeholder_id'; // Needs to match backend
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || 'Ov23li9UHHkPDBEWlaRp'; // Updated with your ID
 
 export async function login() {
   const spinner = ora('Starting authentication...').start();
@@ -82,8 +82,12 @@ export async function login() {
       
       spinner.text = 'Waiting for browser callback...';
       
-      open(authUrl).catch(() => {
-        // Silently ignore if browser can't open, user has the URL above
+      open(authUrl).then((cp) => {
+        cp.on('error', () => {
+          // Silently ignore spawn errors (like missing xdg-open on VPS)
+        });
+      }).catch(() => {
+        // Ignore promise rejection as well
       });
     });
 
